@@ -1,102 +1,30 @@
-exec_bm Executable
+# Gerhard Dorn, 21st July, 2021
 
-1. Prerequisites for Deployment 
+We work with two directories:
+[1] program directory: bm_program - contains the program
+[2] job directory: run/$ID - collects all data for a certain system, which has a name $ID specified in the setup_file, e.g. run/benzene
 
-Verify that version 9.5 (R2018b) of the MATLAB Runtime is installed.   
-If not, you can run the MATLAB Runtime installer.
-To find its location, enter
-  
-    >>mcrinstaller
-      
-at the MATLAB prompt.
+Changing and compiling the program is done within the bm_program folder
 
-Alternatively, download and install the Linux version of the MATLAB Runtime for R2018b 
-from the following link on the MathWorks website:
-
-    http://www.mathworks.com/products/compiler/mcr/index.html
-   
-For more information about the MATLAB Runtime and the MATLAB Runtime installer, see 
-"Distribute Applications" in the MATLAB Compiler documentation  
-in the MathWorks Documentation Center.
-
-2. Files to Deploy and Package
-
-Files to Package for Standalone 
-================================
--exec_bm 
--run_exec_bm.sh (shell script for temporarily setting environment variables and executing 
-                 the application)
-   -to run the shell script, type
-   
-       ./run_exec_bm.sh <mcr_directory> <argument_list>
-       
-    at Linux or Mac command prompt. <mcr_directory> is the directory 
-    where version 9.5 of the MATLAB Runtime is installed or the directory where 
-    MATLAB is installed on the machine. <argument_list> is all the 
-    arguments you want to pass to your application. For example, 
-
-    If you have version 9.5 of the MATLAB Runtime installed in 
-    /mathworks/home/application/v95, run the shell script as:
-    
-       ./run_exec_bm.sh /mathworks/home/application/v95
-       
-    If you have MATLAB installed in /mathworks/devel/application/matlab, 
-    run the shell script as:
-    
-       ./run_exec_bm.sh /mathworks/devel/application/matlab
--MCRInstaller.zip
-    Note: if end users are unable to download the MATLAB Runtime using the
-    instructions in the previous section, include it when building your 
-    component by clicking the "Runtime included in package" link in the
-    Deployment Tool.
--This readme file 
+Setup of the system and calling of the program with various parameters is done from the run/$ID directory
 
 
-
-3. Definitions
-
-For information on deployment terminology, go to
-http://www.mathworks.com/help and select MATLAB Compiler >
-Getting Started > About Application Deployment >
-Deployment Product Terms in the MathWorks Documentation
-Center.
-
-4. Appendix 
-
-A. Linux systems:
-In the following directions, replace MR/v95 by the directory on the target machine where 
-   MATLAB is installed, or MR by the directory where the MATLAB Runtime is installed.
-
-(1) Set the environment variable XAPPLRESDIR to this value:
-
-MR/v95/X11/app-defaults
+ad 1)
+a) run "compile.m" after changes in the program (e.g. enabling CPT), check that paths are correct (e.g. GROUNDPATH = "~/QUENTIN/bm_program/")
+b) the bash file "start_matlab.sh" calls the automatically generated "run_exec_bm.sh" file which starts the compiled program "exec_bm" with the parameters in the correct order
+-> check that the path in "start_matlab.sh" links to "bm_program/run_exec_bm.sh"
 
 
-(2) If the environment variable LD_LIBRARY_PATH is undefined, set it to the following:
+ad 2)
+c) Choose a short name for the system you want to study (e.g. TEST) and create a job directory for the system you want to study in /run/ (e.g. /run/TEST) (copy the TEST directory and change all TEST names to your name)
+d) Setup for the open quantum system is done within the setup_file_$ID
+running it will create the file "setup_file_$JOB_ID" in the ./data/ subfolder. The program takes all  of its input parameters except the job_id from this file. The created $JOB_ID contains the day of its creation and an index. 
 
-MR/v95/runtime/glnxa64:MR/v95/bin/glnxa64:MR/v95/sys/os/glnxa64:MR/v95/sys/opengl/lib/glnxa64
+e) You have to write the $JOB_ID in the batch_config file (e.g. Conder_sub.q) and define how many runs shall be started
 
-If it is defined, set it to the following:
+f) call your batch job (using e.g. HTCondor or SLURM) from the job directory [2] and get results saved in ./data/ and ./log_files.
 
-${LD_LIBRARY_PATH}:MR/v95/runtime/glnxa64:MR/v95/bin/glnxa64:MR/v95/sys/os/glnxa64:MR/v95/sys/opengl/lib/glnxa64
-
-    For more detailed information about setting the MATLAB Runtime paths, see Package and 
-   Distribute in the MATLAB Compiler documentation in the MathWorks Documentation Center.
-
-
-     
-        NOTE: To make these changes persistent after logout on Linux 
-              or Mac machines, modify the .cshrc file to include this  
-              setenv command.
-        NOTE: The environment variable syntax utilizes forward 
-              slashes (/), delimited by colons (:).  
-        NOTE: When deploying standalone applications, you can
-              run the shell script file run_exec_bm.sh 
-              instead of setting environment variables. See 
-              section 2 "Files to Deploy and Package".    
-
-
-
+g) use "post_fun_fuse_files($RUN_ID)" (in bm_program/functions/) to create a combined_data_file that contains all return paramters from all runs of a job for further data evaluation.
 
 
 
